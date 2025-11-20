@@ -1,11 +1,50 @@
-# Trigram Language Model
+📚 Trigram Language Model — ML Intern Assignment
 
-This directory contains the core assignment files for the Trigram Language Model.
+This project implements a Trigram (N=3) Language Model from scratch.
+It includes text cleaning, rare-word handling (<UNK>), trigram probability estimation, and probabilistic text generation.
 
-## How to Run 
+The project structure:
 
-    # Instructions on how to run. (filled by you)
+```
+ml-assignment/
+│
+├── data/
+│   ├── example_corpus.txt
+│   └── large_corpus.txt        (optional – Gutenberg book)
+│
+├── src/
+│   ├── ngram_model.py
+│   ├── generate.py
+│   ├── utils.py
+│   └── clean_corpus.py
+│
+├── tests/
+│   ├── test_ngram.py
+│   └── conftest.py
+│
+└── evaluation.md
+```
 
-## Design Choices
+How to Run the Project:
 
-Please document your design choices in the `evaluation.md` file. This should be a 1-page summary of the decisions you made and why you made them.
+1. Train & Generate Text (using the example corpus)
+
+From project root:
+
+```
+python -m src.generate
+```
+
+2. Running Tests
+
+To verify the model:
+
+```
+pytest -q
+```
+
+You should see:
+
+```
+3 passed
+```

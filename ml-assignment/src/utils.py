@@ -1,2 +1,3 @@
-# This file is optional.
-# You can add any utility functions you need for your implementation here.
+def read_file(path, encoding="utf-8"):
+    with open(path, "r", encoding=encoding) as f:
+        return f.read()
