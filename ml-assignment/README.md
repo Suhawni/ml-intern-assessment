@@ -1,3 +1,5 @@
+## Task 2 (Done)
+
 📚 Trigram Language Model — ML Intern Assignment
 
 This project implements a Trigram (N=3) Language Model from scratch.
@@ -48,3 +50,15 @@ You should see:
 ```
 3 passed
 ```
+
+## Task 2 — Scaled Dot-Product Attention (Also Done)
+
+How to Run Task 2
+
+From repo root:
+
+```
+cd task2
+python demo.py
+```
+

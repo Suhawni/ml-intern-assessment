@@ -54,7 +54,7 @@ Every sentence is padded with:
 <s>, <s>   ...tokens...   <eos>
 ```
 
-Two <s> tokens are required for trigram history.
+Two `<s>` tokens are required for trigram history.
 Padding ensures the model can generate complete sentences even from small datasets.
 
 Unknown Words (<UNK>)
@@ -112,7 +112,7 @@ This keeps the project portable and dependency-free.
 
 START/END Tokens Not Returned to Output
 
-Generation excludes <s> tokens and stops cleanly at <eos>, producing readable sentences.
+Generation excludes `<s>` tokens and stops cleanly at <eos>, producing readable sentences.
 
 Fallback Single Token on Empty Output
 
@@ -146,3 +146,24 @@ true probabilistic behavior
 The implementation is modular, easily extensible, and suitable for both educational and practical language modeling experiments.
 
 
+
+## Task 2 — Scaled Dot-Product Attention (Also Done)
+
+For Task 2, I implemented the Scaled Dot-Product Attention mechanism using only NumPy,
+following the Transformer paper (“Attention Is All You Need”).
+
+The function computes:
+
+    scores = (Q @ Kᵀ) / sqrt(d_k)
+
+A mask can optionally be applied by assigning -1e9 to masked positions before softmax.
+Softmax is computed in a numerically stable way by subtracting the max value in each row.
+The output is computed as:
+
+    output = softmax(scores) @ V
+
+The implementation is located in:
+    task2/attention.py
+
+A working demonstration using small Q, K, V matrices is provided in:
+    task2/demo.py
