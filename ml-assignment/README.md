@@ -1,4 +1,4 @@
-## Task 2 (Done)
+## Task 1 (Done)
 
 📚 Trigram Language Model — ML Intern Assignment
 
