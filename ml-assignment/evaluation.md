@@ -1,151 +1,136 @@
-Evaluation
+# Evaluation
 
-This document summarizes the design choices made while implementing the Trigram Language Model for the ML Intern Assessment.
+This document summarizes the design choices made while implementing the **Trigram Language Model** and the **Scaled Dot-Product Attention** mechanism for the ML Intern Assessment.
 
-1. Storage of N-Gram Counts
+---
 
-I used three main data structures, all based on Python’s collections.Counter and defaultdict, for fast, compact, and intuitive storage of counts:
+# Task 1 — Trigram Language Model
 
+## Storage of N-Gram Counts
+
+I used three main data structures based on Python’s `collections.Counter` and `defaultdict`.  
+These choices ensure efficient counting, lookup, and clean logic.
+
+### **Trigram Counts**
 ```python
 trigram_counts[(w1, w2)][w3] = count
 ```
+This stores the full trigram probability structure  
+P(w₃ | w₁, w₂) and enables efficient sampling.
 
-This stores all observed trigrams and allows fast lookup for the probability
-P(w3 | w1, w2).
-Choosing a (tuple → Counter) structure keeps the logic simple, avoids nested dictionaries, and works efficiently for large corpora.
+### **Bigram Counts**
+Two versions are stored for backoff:
+```python
+(w1,)    -> Counter(w2)
+(w1, w2) -> Counter(w3)
+```
+This prevents failures when a trigram is unseen by falling back to bigram context.
 
-Bigram Counts
-
-Two forms were stored to enable backoff logic:
-
-1. (w1,) → Counter(w2)
-
-2. (w1, w2) → Counter(w3)
-
-This avoids failures when unseen trigram contexts appear during generation.
-
+### **Unigram Counts**
 ```python
 unigram_counts[w] = count
 ```
-Used as the final fallback for unknown contexts during text generation.
+Used as a final fallback when bigram and trigram contexts do not exist.
 
-This layered structure (tri → bi → uni) closely follows classical language modeling.
+Together, this tri → bi → uni layered structure ensures robust generation.
 
-2. Text Cleaning, Padding, and Unknown Words
-Cleaning
+---
 
-The text is cleaned using:
+## Text Cleaning, Padding, and Unknown Words
 
-- lowercasing
+### **Cleaning**
+The text undergoes:
+- lowercase conversion  
+- removal of punctuation except `'`  
+- whitespace normalization  
+- sentence splitting using `.`, `!`, `?`
 
-- removing punctuation except apostrophes
+This ensures consistent, predictable tokens.
 
-- reducing multiple spaces
-
-- splitting sentences on ., !, ?
-
-This ensures consistency in the token stream and reduces noise in the vocabulary.
-
-Padding
-
-Every sentence is padded with:
-
+### **Padding**
+Each sentence becomes:
 ```
-<s>, <s>   ...tokens...   <eos>
+<s>, <s>, token1, token2, … , tokenN, <eos>
 ```
+Two `<s>` tokens are required to create the first trigram.
 
-Two `<s>` tokens are required for trigram history.
-Padding ensures the model can generate complete sentences even from small datasets.
+### **Unknown Words (`<UNK>`)**
+A **two-pass training approach** was used:
 
-Unknown Words (<UNK>)
+1. First pass: count token frequencies  
+2. Replace rare words (`count <= unk_threshold`) with `<UNK>`  
+3. Rebuild all n-gram counts with `<UNK>` included
 
-I used a two-pass training approach:
+This greatly reduces sparsity and improves the model’s ability to generalize.
 
-1. First pass: count raw word frequencies
+---
 
-2. Words with count ≤ unk_threshold (default = 1) become <UNK>
+## Generate Function & Probabilistic Sampling
 
-3. Second pass: replace rare words with <UNK> and build n-gram counts
-
-This prevents sparsity, handles rare words robustly, and improves generation quality, especially on small corpora.
-
-3. Generate Function & Probabilistic Sampling
-Core Logic
-
+### **Core Logic**
 Generation starts with:
-
 ```
-w1 = <s>, w2 = <s>
+w1 = <s>
+w2 = <s>
 ```
-Then repeatedly:
+
+At each step:
 ```
-next_word = sample P(w3 | w1, w2)
+next_word ~ P(w3 | w1, w2)
 ```
-Stop conditions:
 
-<eos> is generated
+Stopping conditions:
+- `<eos>` is generated  
+- maximum length reached  
 
-max_length is reached
+### **Backoff Strategy**
+If `(w1, w2)` does not exist:
+1. Try bigram: P(w | w2)  
+2. Else fallback to unigram sampling  
 
-Backoff Strategy
+This prevents dead-ends and ensures fluent text even for unseen contexts.
 
-If (w1, w2) is unseen:
-
-1. Try bigram: P(w | w2)
-
-2. Else fallback to unigram sampling
-
-This avoids dead-ends and allows coherent generation even for unseen sequences.
-
-Sampling
-
-I used Python’s built-in:
-
+### **Probability Sampling**
 ```python
 random.choices(tokens, weights=counts)
 ```
-4. Additional Design Choices
-Simple Sentence Splitter
+Used to ensure *true probabilistic* generation (not greedy).  
+The model produces varied, natural text instead of deterministic output.
 
-For ease and transparency, I used a regex-based splitter instead of external NLP libraries.
-This keeps the project portable and dependency-free.
+---
 
-START/END Tokens Not Returned to Output
+## Additional Design Choices
 
-Generation excludes `<s>` tokens and stops cleanly at <eos>, producing readable sentences.
+### **Simple Regex Sentence Splitter**
+This avoids external dependencies and keeps the implementation portable.
 
-Fallback Single Token on Empty Output
+### **Removing `<s>` From Output**
+Generated sentences exclude `<s>` tokens and stop cleanly on `<eos>`.
 
-For very small corpora, if no trigram can be formed, the model returns a single sampled unigram token.
-This ensures tests pass and avoids empty output.
+### **Fallback Output**
+If the model cannot form any trigram (very tiny corpus), it returns a single sampled unigram.  
+This prevents empty-string outputs and ensures tests pass.
 
-Configurable UNK Threshold
+### **Configurable `unk_threshold`**
+- `unk_threshold = 0` works best for tiny corpora  
+- Higher values generalize better for larger corpora  
 
-Allows:
+This gives flexibility depending on dataset size.
 
-unk_threshold = 0 for tiny corpora
+---
 
-higher thresholds for large corpora
+## **Conclusion — Task 1**
 
-making the model flexible across datasets.
+The implementation follows classical NLP practices, prioritizing:
+- clarity  
+- correctness  
+- robust handling of sparse data  
+- true probabilistic behavior  
+- extensibility  
 
-Conclusion
+The resulting model works effectively on both small and large corpora and produces coherent, varied text.
 
-The design choices focus on:
-
-clarity
-
-correctness
-
-classical NLP practices
-
-robustness to tiny and large datasets
-
-true probabilistic behavior
-
-The implementation is modular, easily extensible, and suitable for both educational and practical language modeling experiments.
-
-
+---
 
 ## Task 2 — Scaled Dot-Product Attention (Also Done)
 
